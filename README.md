@@ -29,8 +29,8 @@ A powerful and user-friendly Discord verification system for your Minecraft serv
 - Detailed feedback
 
 ## 📋 Requirements
-- Minecraft 1.20+
-- Java 17 or higher
+- Minecraft 1.20.x - 1.21.4 (Paper/Purpur)
+- Java 21 or higher
 - Discord Bot Token
 - Discord Server with admin access
 
@@ -114,11 +114,18 @@ Join our [Discord Support Server](https://discord.gg/wMZBfMnNkM) for assistance!
 
 ## 🔄 Version History
 
+### v1.0.1 - Java 21 Update
+- Added support for Java 21
+- Updated dependencies to latest versions
+- Improved compatibility with newer Minecraft versions
+- Performance optimizations
+
 ### v1.0.0 - Initial Release
 - Core verification system
 - Nickname synchronization
 - Role management
 - Clickable codes
+- Support for Minecraft 1.20.x - 1.21.4
 
 ## 📜 License
 Copyright © 2024 GukDev. All rights reserved.
