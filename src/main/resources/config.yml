@@ -1,0 +1,94 @@
+# DiscordLink Configuration
+# 
+# Discord Bot Setup Instructions:
+# 1. Create a new application at https://discord.com/developers/applications
+# 2. Add a bot to your application
+# 3. Enable the following Privileged Gateway Intents:
+#    - SERVER MEMBERS INTENT
+# 4. Copy your bot token and paste it below
+# 5. Create an invite link with these permissions:
+#    - Manage Roles
+#    - Send Messages
+#    - Read Messages/View Channels
+#    - Use Slash Commands
+# 6. Add these OAuth2 scopes:
+#    - bot
+#    - applications.commands
+# 7. Invite the bot to your server
+# 8. Make sure the bot's role is ABOVE the verified role in server settings
+
+# Plugin Settings
+settings:
+  # Plugin prefix in messages
+  prefix: "&8[&b&lDiscordLink&8]&r "
+  # Debug mode - shows extra information in console
+  debug: false
+
+# Discord Bot Settings
+discord:
+  # Your Discord bot token (Required)
+  # Get this from https://discord.com/developers/applications
+  token: ""
+
+  # Your Discord server/guild ID (Required)
+  # Enable Developer Mode in Discord Settings > App Settings > Advanced
+  # Right-click your server and click "Copy ID"
+  guild_id: ""
+
+  # The role ID to give to verified users (Required)
+  # Right-click the role in Server Settings > Roles and click "Copy ID"
+  verified_role_id: ""
+
+  # Nickname synchronization settings
+  # Whether to update Discord nicknames to match Minecraft usernames
+  sync_nickname: true
+  # Format for nicknames. Use %player% for the Minecraft username
+  nickname_format: "%player%"
+
+# Verification Settings
+verification:
+  # Code generation settings
+  code:
+    # Code format: NUMERIC or ALPHANUMERIC
+    format: "ALPHANUMERIC"
+    # Code length (recommended: 6-8)
+    length: 6
+    # How long the code is valid for (in seconds)
+    expiry: 300
+
+  # Cooldown between verification attempts (in seconds)
+  cooldown: 60
+
+# Messages
+messages:
+  minecraft:
+    # Message sent when starting verification
+    verify-start: "&b=== Verification Instructions ===\n&7➊ Your unique code: &e%code%\n&7➋ Join our Discord server if you haven't\n&7➌ Use &f/verify %code% &7in Discord\n&7➍ Wait for confirmation\n&b==========================="
+    # Message sent when already verified
+    already-verified: "&c❌ Your account is already verified!\n&7To unlink your account, use &f/unlink"
+    # Message sent when on cooldown
+    cooldown: "&c⏳ Please wait &e%time% seconds &cbefore requesting another code."
+    # Message sent when verification is successful
+    verify-success: "&a✔ Successfully verified your Discord account!\n&7You now have access to exclusive features."
+    # Message sent when verification fails
+    verify-failure: "&c❌ Verification failed. Please try again.\n&7If this persists, contact an administrator."
+    # Message sent when unlinking account
+    unlink-success: "&a✔ Your accounts have been unlinked successfully!\n&7You can verify again using &f/verify"
+    # Message sent when trying to unlink but not verified
+    not-verified: "&c❌ You don't have any linked accounts!\n&7Use &f/verify &7to link your account."
+    # Message sent when a command can only be used by players
+    player-only: "&c❌ This command can only be used by players!"
+    # Message sent when an error occurs
+    error: "&c❌ An error occurred: %error%\n&7Please try again later."
+
+  discord:
+    # Message sent when verification is successful
+    verify-success: "✅ Successfully verified!\n• Your Minecraft account is now linked\n• You've been given the verified role\n• You can now access verified-only features"
+    # Message sent when verification fails
+    verify-failure: "❌ Invalid or expired verification code!\n• Please generate a new code in Minecraft using `/verify`\n• Make sure to use the code within 5 minutes"
+    # Message sent when already verified
+    already-verified: "❌ This Discord account is already verified with a Minecraft account!\n• Use `/unlink` in Minecraft to remove the current link first"
+    # Message sent when no code is provided
+    no-code: "❌ Please provide a verification code!\n• Generate one in Minecraft using `/verify`"
+    # Message sent when an error occurs
+    error: "❌ An error occurred while processing your request.\n• Please try again later\n• If the issue persists, contact an administrator" 

@@ -1,0 +1,38 @@
+name: DiscordLink
+version: '1.0.1'
+main: dev.guk.discordlink.DiscordLink
+api-version: '1.20'
+description: Link Minecraft and Discord accounts with role synchronization
+author: GukDev
+website: https://github.com/GukDev/DiscordLink
+
+commands:
+  verify:
+    description: Start the verification process
+    usage: /verify
+    permission: discordlink.verify
+  unlink:
+    description: Unlink your Discord account
+    usage: /unlink
+    permission: discordlink.unlink
+  discordlink:
+    description: Plugin management commands
+    usage: /discordlink reload
+    permission: discordlink.admin
+    
+permissions:
+  discordlink.*:
+    description: Gives access to all DiscordLink commands
+    children:
+      discordlink.verify: true
+      discordlink.unlink: true
+      discordlink.admin: true
+  discordlink.verify:
+    description: Allows players to verify their account
+    default: true
+  discordlink.unlink:
+    description: Allows players to unlink their account
+    default: true
+  discordlink.admin:
+    description: Allows access to admin commands
+    default: op 

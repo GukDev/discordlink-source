@@ -1,39 +1,60 @@
-# Source code and development files
-src/
-pom.xml
+# Build output
+target/
+*.jar
+build/
+out/
+
+# IDE files
 .idea/
 *.iml
+.vscode/
 .settings/
 .classpath
 .project
-.vscode/
+.factorypath
+*.launch
 
-# Compiled files
-target/
-bin/
-build/
-out/
+# Development files
+OUTLINE.md
+DEVELOPMENT_GUIDELINES.md
+.cursorrules
 
 # Dependency directories
 lib/
 libs/
 node_modules/
+dist/
 
 # Logs and databases
 *.log
+logs/
 *.sql
 *.sqlite
 
 # Local configuration
-config.yml
 .env
 *.properties
 
-# OS generated files
+# OS files
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
+
+# Test files
+/test/
+*.test.*
+/coverage/
+
+# Documentation drafts
+/docs/drafts/
+*.draft.*
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~ 
