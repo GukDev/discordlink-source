@@ -15,9 +15,7 @@ out/
 *.launch
 
 # Development files
-OUTLINE.md
 DEVELOPMENT_GUIDELINES.md
-.cursorrules
 
 # Dependency directories
 lib/
@@ -34,6 +32,7 @@ logs/
 # Local configuration
 .env
 *.properties
+config.yml
 
 # OS files
 .DS_Store
@@ -57,4 +56,8 @@ Thumbs.db
 *.tmp
 *.temp
 *.swp
-*~ 
+*~
+
+# Development and source files
+src/
+pom.xml 
