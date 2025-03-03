@@ -1,0 +1,758 @@
+# DiscordLink Development Rules
+
+## Code Style
+- Use 4 spaces for indentation
+- Follow Java naming conventions
+- Keep methods focused and concise
+- Document public APIs
+- Add comments for complex logic
+
+## Performance
+- Use async operations for heavy tasks
+- Avoid blocking main thread
+- Cache frequently accessed data
+- Clean up resources properly
+- Monitor memory usage
+
+## Error Handling
+- Log all exceptions appropriately
+- Provide user-friendly error messages
+- Implement proper fallbacks
+- Validate all user input
+- Handle edge cases
+
+## Testing
+- Test with 100+ players
+- Verify async operations
+- Check memory leaks
+- Test error scenarios
+- Monitor TPS impact
+
+## Security
+- Validate all user input
+- Secure sensitive data
+- Use proper permissions
+- Implement rate limiting
+- Follow security best practices
+
+## Documentation
+- Keep README updated
+- Document configuration
+- Add code comments
+- Update version history
+- Document breaking changes
+
+## Git Workflow
+- Use feature branches
+- Write clear commit messages
+- Tag releases properly
+- Update documentation
+- Follow semantic versioning
+
+# High-Performance Minecraft Plugin Development Guidelines
+
+## Purpose and Scope
+These rules form the foundation for all our Minecraft plugin development. They are designed to ensure:
+1. **Performance**: Optimal server performance with large player counts
+2. **Reliability**: Stable and bug-free operation under heavy load
+3. **Maintainability**: Clean, organized, and well-documented code
+4. **Scalability**: Ability to handle growing player bases and data
+5. **Security**: Protection against exploits and data breaches
+
+Every plugin developed must adhere to these guidelines to maintain consistent quality and performance across our plugin ecosystem.
+
+## Mandatory Requirements
+1. **Performance First**: Every feature must be implemented with performance in mind
+2. **Async Operations**: All heavy operations MUST be async
+3. **Resource Management**: All resources MUST be properly cleaned up
+4. **Error Handling**: All exceptions MUST be properly caught and logged
+5. **Documentation**: All public APIs MUST be documented
+6. **Testing**: All features MUST be tested under high load
+
+## Plugin Structure Requirements
+
+1. **Plugin Description (plugin.yml)**
+   - Required fields:
+     ```yaml
+     name: YourPlugin          # Alphanumeric, _, -, . only
+     version: 1.0.0           # Semantic versioning recommended
+     main: your.package.MainClass
+     api-version: '1.20'      # Target API version
+     ```
+   - Optional but recommended:
+     ```yaml
+     description: Plugin description
+     author/authors: [Name]
+     website: https://your-site.com
+     depend: [RequiredPlugins]
+     softdepend: [OptionalPlugins]
+     loadbefore: [LoadFirst]
+     commands:                # Define all commands
+     permissions:            # Define all permissions
+     ```
+
+## Core Performance Principles
+
+1. **Asynchronous Operations**
+   - NEVER perform heavy operations on the main thread
+   - Use Bukkit's scheduler patterns:
+     ```java
+     // Async task
+     Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+         // Heavy operation
+     });
+     
+     // Delayed task
+     Bukkit.getScheduler().runTaskLater(plugin, () -> {
+         // Delayed operation
+     }, 20L); // 20 ticks = 1 second
+     
+     // Repeating task
+     Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+         // Repeated operation
+     }, 0L, 20L);
+     ```
+   - Database operations, file I/O, and network requests MUST be async
+   - Use `CompletableFuture` for complex async operations
+
+2. **Event Handling**
+   - Use appropriate event priorities:
+     ```java
+     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+     public void onEvent(Event event) {
+         // Handle event
+     }
+     ```
+   - Priority order: LOWEST → LOW → NORMAL → HIGH → HIGHEST → MONITOR
+   - Cancel events early if conditions aren't met
+   - Cache event results when possible
+   - AVOID listening to frequent events like `PlayerMoveEvent` unless absolutely necessary
+
+3. **Data Structures**
+   - Use `HashMap` for O(1) lookups
+   - `ConcurrentHashMap` for thread-safe operations
+   - `FastUtil` collections for primitive types
+   - Avoid storing unnecessary data in memory
+
+## Command and Permission Management
+
+1. **Command Structure**
+   ```yaml
+   commands:
+     commandname:
+       description: Command description
+       usage: "/<command> [args]"
+       aliases: [cmd, cmdname]
+       permission: yourplugin.command
+       permission-message: "§cNo permission!"
+   ```
+
+2. **Permission Structure**
+   ```yaml
+   permissions:
+     yourplugin.*:
+       description: All plugin permissions
+       children:
+         yourplugin.command: true
+     yourplugin.command:
+       description: Allows specific command
+       default: op
+   ```
+
+## Database Best Practices
+
+1. **Connection Management**
+   - Use HikariCP for connection pooling:
+     ```java
+     HikariConfig config = new HikariConfig();
+     config.setJdbcUrl("jdbc:mysql://localhost:3306/db");
+     config.setUsername("user");
+     config.setPassword("pass");
+     config.setMaximumPoolSize(10);
+     
+     HikariDataSource dataSource = new HikariDataSource(config);
+     ```
+   - Close connections in finally blocks
+   - Use try-with-resources for auto-closing
+
+## Configuration Management
+
+1. **Config Best Practices**
+   ```java
+   // Load config
+   saveDefaultConfig();
+   FileConfiguration config = getConfig();
+   
+   // Access values with defaults
+   int value = config.getInt("path", defaultValue);
+   
+   // Save config
+   saveConfig();
+   ```
+
+2. **Custom Config Files**
+   ```java
+   File customConfigFile = new File(getDataFolder(), "custom.yml");
+   YamlConfiguration customConfig = YamlConfiguration.loadConfiguration(customConfigFile);
+   ```
+
+## Resource Management
+
+1. **World Operations**
+   ```java
+   // Efficient block updates
+   Block block = world.getBlockAt(x, y, z);
+   block.setType(Material.STONE, false); // false = no physics update
+   
+   // Batch updates
+   for (int x = 0; x < 16; x++) {
+       for (int z = 0; z < 16; z++) {
+           // Process chunk column
+       }
+   }
+   ```
+
+2. **Entity Management**
+   ```java
+   // Efficient entity spawning
+   world.spawn(location, EntityType.class, entity -> {
+       // Configure entity
+   });
+   ```
+
+## Code Organization
+
+1. **Package Structure**
+```
+src/main/java/your/plugin/
+├── commands/       # Command handlers
+├── listeners/      # Event listeners
+├── database/       # Database operations
+├── models/         # Data models
+├── managers/       # Feature managers
+├── utils/          # Utility classes
+└── config/         # Configuration handlers
+```
+
+2. **Class Design**
+   - Implement singleton pattern for managers
+   - Use builder pattern for complex objects
+   - Follow SOLID principles
+   - Use dependency injection
+
+## Configuration
+
+1. **File Management**
+   - Use YAML for configs
+   - Implement config reloading
+   - Cache config values
+   - Validate config on load
+
+2. **Performance Settings**
+   - Make performance-critical options configurable
+   - Implement limits and thresholds
+   - Allow feature toggling
+
+## Error Handling
+
+1. **Exception Management**
+   - Log exceptions properly
+   - Implement graceful fallbacks
+   - Use custom exceptions
+   - Avoid try-catch in hot paths
+
+2. **Logging**
+   - Use appropriate log levels
+   - Implement debug logging
+   - Log performance metrics
+   - Avoid excessive logging
+
+## Testing
+
+1. **Performance Testing**
+   - Test with high player counts
+   - Monitor TPS impact
+   - Profile memory usage
+   - Test concurrent operations
+
+2. **Load Testing**
+   - Simulate real server conditions
+   - Test with multiple plugins
+   - Monitor resource usage
+   - Test edge cases
+
+## Optimization Checklist
+
+- [ ] Async operations implemented correctly
+- [ ] Event handlers optimized
+- [ ] Database queries efficient
+- [ ] Memory leaks checked
+- [ ] Thread safety verified
+- [ ] Resource cleanup implemented
+- [ ] Configuration optimized
+- [ ] Error handling robust
+- [ ] Performance tested
+- [ ] Documentation complete
+
+## Common Pitfalls
+
+1. **Performance Issues**
+   - Blocking main thread
+   - Memory leaks
+   - Inefficient algorithms
+   - Excessive object creation
+
+2. **Thread Safety**
+   - Race conditions
+   - Deadlocks
+   - Inconsistent state
+   - Synchronization overhead
+
+## Monitoring
+
+1. **Performance Metrics**
+   - TPS monitoring
+   - Memory usage
+   - CPU usage
+   - Database performance
+
+2. **Debugging**
+   - Implement debug commands
+   - Log performance data
+   - Monitor thread states
+   - Track resource usage
+
+## Security
+
+1. **Input Validation**
+   - Sanitize all user input
+   - Validate config values
+   - Check permissions properly
+   - Prevent command injection
+
+2. **Data Protection**
+   - Secure sensitive data
+   - Use encryption when needed
+   - Implement proper permissions
+   - Validate data integrity
+
+## Version Compatibility
+
+1. **API Usage**
+   - Use version-independent methods
+   - Implement version checks
+   - Handle API changes gracefully
+   - Test across versions
+
+2. **Dependencies**
+   - Minimize dependencies
+   - Use stable versions
+   - Handle missing dependencies
+   - Check compatibility
+
+Remember: Performance is critical for high-traffic servers. Always profile and test thoroughly before deployment. 
+
+## Event System Best Practices
+
+1. **Event Registration**
+   ```java
+   @EventHandler(priority = EventPriority.HIGH)
+   public void onPlayerJoin(PlayerJoinEvent event) {
+       // Handle event
+   }
+   ```
+
+2. **Custom Events**
+   ```java
+   public class CustomEvent extends Event {
+       private static final HandlerList HANDLERS = new HandlerList();
+       private final Player player;
+
+       public CustomEvent(Player player) {
+           this.player = player;
+       }
+
+       public Player getPlayer() {
+           return player;
+       }
+
+       @Override
+       public HandlerList getHandlers() {
+           return HANDLERS;
+       }
+
+       public static HandlerList getHandlerList() {
+           return HANDLERS;
+       }
+   }
+   ```
+
+## Performance Optimization
+
+1. **Chunk Loading**
+   ```java
+   // Async chunk loading
+   CompletableFuture<Chunk> future = world.getChunkAtAsync(x, z);
+   future.thenAccept(chunk -> {
+       // Process chunk
+   });
+   ```
+
+2. **Particle Effects**
+   ```java
+   // Efficient particle spawning
+   world.spawnParticle(Particle.FLAME, location, 10, 0.5, 0.5, 0.5, 0.1);
+   ```
+
+3. **Block Updates**
+   ```java
+   // Batch block updates
+   Location loc1 = new Location(world, x1, y1, z1);
+   Location loc2 = new Location(world, x2, y2, z2);
+   
+   for (int x = Math.min(loc1.getBlockX(), loc2.getBlockX()); x <= Math.max(loc1.getBlockX(), loc2.getBlockX()); x++) {
+       for (int y = Math.min(loc1.getBlockY(), loc2.getBlockY()); y <= Math.max(loc1.getBlockY(), loc2.getBlockY()); y++) {
+           for (int z = Math.min(loc1.getBlockZ(), loc2.getBlockZ()); z <= Math.max(loc1.getBlockZ(), loc2.getBlockZ()); z++) {
+               // Process block
+           }
+       }
+   }
+   ```
+
+## Memory Management
+
+1. **Collection Cleanup**
+   ```java
+   @Override
+   public void onDisable() {
+       // Clear caches
+       cache.clear();
+       
+       // Cancel tasks
+       Bukkit.getScheduler().cancelTasks(this);
+       
+       // Close resources
+       dataSource.close();
+   }
+   ```
+
+2. **Weak References**
+   ```java
+   private final Map<UUID, WeakReference<Player>> playerCache = new WeakHashMap<>();
+   ```
+
+## Thread Safety Guidelines
+
+1. **Main Thread Operations**
+   - World modifications
+   - Entity spawning
+   - Inventory manipulation
+   - Player interactions
+
+2. **Async-Safe Operations**
+   - Database queries
+   - File I/O
+   - Network requests
+   - Heavy calculations
+
+3. **Thread Synchronization**
+   ```java
+   // Run on main thread from async
+   Bukkit.getScheduler().runTask(plugin, () -> {
+       // Main thread code
+   });
+   
+   // Run async from main thread
+   Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+       // Async code
+   });
+   ```
+
+## Configuration Best Practices
+
+1. **Config Validation**
+   ```java
+   public void loadConfig() {
+       saveDefaultConfig();
+       FileConfiguration config = getConfig();
+       
+       // Validate and set defaults
+       if (!config.isSet("settings.maxPlayers")) {
+           config.set("settings.maxPlayers", 100);
+       }
+       
+       if (!config.isSet("settings.enableFeature")) {
+           config.set("settings.enableFeature", true);
+       }
+       
+       saveConfig();
+   }
+   ```
+
+2. **Reload Handling**
+   ```java
+   public void reloadPlugin() {
+       // Save current data
+       saveData();
+       
+       // Reload config
+       reloadConfig();
+       
+       // Reinitialize systems
+       initializeSystems();
+   }
+   ```
+
+## Command Framework
+
+1. **Command Executor**
+   ```java
+   public class CommandHandler implements CommandExecutor {
+       @Override
+       public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+           if (!(sender instanceof Player)) {
+               sender.sendMessage("§cOnly players can use this command!");
+               return true;
+           }
+           
+           if (!sender.hasPermission("plugin.command")) {
+               sender.sendMessage("§cNo permission!");
+               return true;
+           }
+           
+           // Command logic
+           return true;
+       }
+   }
+   ```
+
+2. **Tab Completion**
+   ```java
+   public class TabCompleter implements TabCompleter {
+       @Override
+       public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+           List<String> completions = new ArrayList<>();
+           
+           if (args.length == 1) {
+               completions.addAll(Arrays.asList("subcommand1", "subcommand2"));
+           }
+           
+           return completions;
+       }
+   }
+   ```
+
+## Debugging and Profiling
+
+1. **Performance Monitoring**
+   ```java
+   public void profileOperation() {
+       long startTime = System.nanoTime();
+       
+       // Operation to profile
+       
+       long endTime = System.nanoTime();
+       long duration = (endTime - startTime) / 1_000_000; // Convert to milliseconds
+       
+       getLogger().info("Operation took " + duration + "ms");
+   }
+   ```
+
+2. **Debug Logging**
+   ```java
+   public void debugLog(String message) {
+       if (getConfig().getBoolean("debug", false)) {
+           getLogger().info("[DEBUG] " + message);
+       }
+   }
+   ```
+
+Remember:
+- Always use the latest Spigot API documentation
+- Test thoroughly on different server versions
+- Monitor server performance metrics (TPS, memory usage)
+- Keep up with Minecraft version changes
+- Follow Spigot's development guidelines
+- Use Paper API when available for better performance 
+
+## Dependencies and Integration
+
+1. **Vault Integration**
+   - Add Vault as a soft dependency:
+     ```xml
+     <!-- pom.xml -->
+     <repositories>
+         <repository>
+             <id>jitpack.io</id>
+             <url>https://jitpack.io</url>
+         </repository>
+     </repositories>
+     
+     <dependencies>
+         <dependency>
+             <groupId>com.github.MilkBowl</groupId>
+             <artifactId>VaultAPI</artifactId>
+             <version>1.7</version>
+             <scope>provided</scope>
+         </dependency>
+     </dependencies>
+     ```
+   - Check for Vault in onEnable:
+     ```java
+     if (!setupEconomy()) {
+         getLogger().severe("Disabled due to no Vault dependency found!");
+         getServer().getPluginManager().disablePlugin(this);
+         return;
+     }
+     ```
+
+2. **ProtocolLib Integration**
+   - Common pitfalls to avoid:
+     - Never shade ProtocolLib in your plugin
+     - Handle FieldAccessException for version updates
+     - Use binary search for plugin conflicts
+     - Properly clean up packet listeners
+
+3. **WorldEdit/WorldGuard Integration**
+   - Use the appropriate API version:
+     ```xml
+     <dependency>
+         <groupId>com.sk89q.worldedit</groupId>
+         <artifactId>worldedit-bukkit</artifactId>
+         <version>7.2.0</version>
+         <scope>provided</scope>
+     </dependency>
+     ```
+   - Use adapters for type conversion:
+     ```java
+     // Convert between Bukkit and WorldEdit types
+     BukkitAdapter.adapt(location);
+     ```
+
+## Build System Requirements
+
+1. **Maven Configuration**
+   - Use the latest Maven plugins:
+     ```xml
+     <build>
+         <plugins>
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-compiler-plugin</artifactId>
+                 <version>3.10.1</version>
+                 <configuration>
+                     <source>${java.version}</source>
+                     <target>${java.version}</target>
+                 </configuration>
+             </plugin>
+             <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-shade-plugin</artifactId>
+                 <version>3.4.1</version>
+                 <executions>
+                     <execution>
+                         <phase>package</phase>
+                         <goals>
+                             <goal>shade</goal>
+                         </goals>
+                     </execution>
+                 </executions>
+             </plugin>
+         </plugins>
+     </build>
+     ```
+   - Clean before build:
+     ```bash
+     mvn clean package
+     ```
+
+2. **Resource Management**
+   - Filter resources properly:
+     ```xml
+     <resources>
+         <resource>
+             <directory>src/main/resources</directory>
+             <filtering>true</filtering>
+         </resource>
+     </resources>
+     ```
+
+## Paper/Folia Optimization
+
+1. **Paper-Specific Features**
+   - Use Paper API when available:
+     ```java
+     // Paper's async teleport
+     player.teleportAsync(location);
+     
+     // Paper's better chunk loading
+     world.getChunkAtAsync(x, z);
+     ```
+   - Implement Paper events for better performance
+   - Use Paper's extended API features
+
+2. **Folia Compatibility**
+   - Use region-based scheduling:
+     ```java
+     // Schedule task in specific region
+     Bukkit.getRegionalScheduler().execute(plugin, location, () -> {
+         // Region-specific code
+     });
+     ```
+   - Avoid global scheduling where possible
+   - Handle multi-threaded environment properly
+
+## Cross-Platform Compatibility
+
+1. **Version Handling**
+   ```java
+   public class VersionUtil {
+       private static final String VERSION = Bukkit.getServer()
+           .getClass().getPackage().getName().split("\\.")[3];
+       
+       public static boolean isAtLeast(String version) {
+           return VERSION.compareTo(version) >= 0;
+       }
+   }
+   ```
+
+2. **NMS Access**
+   - Use ProtocolLib when possible
+   - Implement version-specific handlers
+   - Cache reflection lookups
+
+## Performance Monitoring
+
+1. **Timings Integration**
+   ```java
+   co.aikar.timings.Timings.startTimingIfSync();
+   try {
+       // Your code here
+   } finally {
+       co.aikar.timings.Timings.stopTimingIfSync();
+   }
+   ```
+
+2. **Memory Monitoring**
+   ```java
+   public void checkMemory() {
+       Runtime runtime = Runtime.getRuntime();
+       long usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024;
+       if (usedMemory > warningThreshold) {
+           getLogger().warning("High memory usage: " + usedMemory + "MB");
+       }
+   }
+   ```
+
+## Testing Requirements
+
+1. **Server Testing**
+   - Test with minimum 100 players
+   - Test with at least 10 concurrent operations
+   - Monitor TPS impact
+   - Test with common plugin combinations
+
+2. **Load Testing**
+   - Simulate real-world scenarios
+   - Test with varying server conditions
+   - Document performance metrics 
