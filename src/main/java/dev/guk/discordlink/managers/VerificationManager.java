@@ -3,6 +3,8 @@ package dev.guk.discordlink.managers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import dev.guk.discordlink.DiscordLink;
 
@@ -63,6 +65,12 @@ public class VerificationManager {
                 // Store the link
                 plugin.getStorageManager().storeVerification(playerId, discordId);
 
+                // Unfreeze the player if they're online
+                Player player = Bukkit.getPlayer(playerId);
+                if (player != null && player.isOnline()) {
+                    plugin.getVerificationFreezeManager().unfreezePlayer(player);
+                }
+
                 // Clean up
                 pendingCodes.remove(playerId);
                 codeExpiry.remove(playerId);
@@ -79,6 +87,14 @@ public class VerificationManager {
 
     public void unlink(UUID playerId) {
         plugin.getStorageManager().removeVerification(playerId);
+        
+        // If player is online, they might need to be frozen again
+        Player player = Bukkit.getPlayer(playerId);
+        if (player != null && player.isOnline() && 
+            plugin.getConfig().getBoolean("verification.freeze.enabled", false) &&
+            !player.hasPermission(plugin.getConfig().getString("verification.freeze.bypass_permission", "discordlink.bypass.freeze"))) {
+            plugin.getVerificationFreezeManager().freezePlayer(player);
+        }
     }
 
     public boolean isOnCooldown(UUID playerId) {

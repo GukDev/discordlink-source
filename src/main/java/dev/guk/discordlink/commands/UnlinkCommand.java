@@ -61,8 +61,25 @@ public class UnlinkCommand implements CommandExecutor {
                 }
             }
 
+            // First, clear any 2FA status
+            // This is important to reset the 2FA state before unlinking
+            if (plugin.getConfig().getBoolean("two_factor_auth.enabled", false)) {
+                plugin.getTwoFactorManager().removePlayer(player.getUniqueId());
+            }
+
             // Unlink account
             plugin.getVerificationManager().unlink(player.getUniqueId());
+            
+            // Apply appropriate freeze state
+            if (plugin.getConfig().getBoolean("verification.freeze.enabled", false) &&
+                !player.hasPermission(plugin.getConfig().getString("verification.freeze.bypass_permission", "discordlink.bypass.freeze"))) {
+                // The player should be frozen now that they're unverified
+                plugin.getVerificationFreezeManager().freezePlayer(player);
+                if (plugin.getConfig().getBoolean("settings.debug", false)) {
+                    plugin.getLogger().info("Player " + player.getName() + " has been frozen after unlinking");
+                }
+            }
+            
             String message = plugin.getConfig().getString("messages.minecraft.unlink-success", "&a✔ Your accounts have been unlinked successfully!");
             player.sendMessage(ColorUtils.translate(prefix + message));
         } catch (Exception e) {

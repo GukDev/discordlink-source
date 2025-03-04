@@ -29,9 +29,18 @@ public class VerifyCommand implements CommandExecutor {
 
         // Check if already verified
         if (plugin.getVerificationManager().isVerified(player.getUniqueId())) {
-            String message = plugin.getConfig().getString("messages.minecraft.already-verified", "&c❌ Your account is already verified!");
-            player.sendMessage(ColorUtils.translate(prefix + message));
-            return true;
+            // Check if there's a force flag to handle Discord role issues (e.g., /verify force)
+            if (args.length > 0 && args[0].equalsIgnoreCase("force")) {
+                // Unlink the account first
+                plugin.getLogger().info("Player " + player.getName() + " is using force verification to fix Discord role issues");
+                plugin.getVerificationManager().unlink(player.getUniqueId());
+                player.sendMessage(ColorUtils.translate(prefix + "&e⚠ Unlinking previous verification to fix Discord issues..."));
+            } else {
+                String message = plugin.getConfig().getString("messages.minecraft.already-verified", "&c❌ Your account is already verified!");
+                message += "\n&7If you're having issues with Discord verification, use &f/verify force";
+                player.sendMessage(ColorUtils.translate(prefix + message));
+                return true;
+            }
         }
 
         // Check cooldown
@@ -48,21 +57,34 @@ public class VerifyCommand implements CommandExecutor {
             
             // Send clickable code message
             String message = plugin.getConfig().getString("messages.minecraft.verify-start", 
-                "&b=== Verification Instructions ===\n&7➊ Your unique code: &e%code%\n&7➋ Join our Discord server if you haven't\n&7➌ Click the code below to copy it, then use &f/verify &7in Discord\n&7➍ Wait for confirmation\n&b===========================");
+                "&b=== Verification Instructions ===\n&7➊ Your unique code: &e%code%\n&7➋ Join our Discord server if you haven't\n&7➌ Use &f/verify %code% &7in Discord\n&7➍ Wait for confirmation\n&b===========================");
             message = message.replace("%code%", code);
             player.sendMessage(ColorUtils.translate(message));
             
-            // Send clickable code component
-            net.md_5.bungee.api.chat.TextComponent clickableCode = new net.md_5.bungee.api.chat.TextComponent(ColorUtils.translate("&a&l[Click to Copy Code]"));
-            clickableCode.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
+            // Send enhanced clickable code component with more visual appeal
+            net.md_5.bungee.api.chat.BaseComponent[] codeComponents = new net.md_5.bungee.api.chat.BaseComponent[] {
+                new net.md_5.bungee.api.chat.TextComponent(ColorUtils.translate("&8[ ")),
+                new net.md_5.bungee.api.chat.TextComponent(ColorUtils.translate("&a&l⬇ CLICK TO COPY CODE ⬇")),
+                new net.md_5.bungee.api.chat.TextComponent(ColorUtils.translate(" &8]"))
+            };
+            
+            // Create main button component
+            net.md_5.bungee.api.chat.TextComponent codeButton = new net.md_5.bungee.api.chat.TextComponent(ColorUtils.translate("&e&l" + code));
+            codeButton.setClickEvent(new net.md_5.bungee.api.chat.ClickEvent(
                 net.md_5.bungee.api.chat.ClickEvent.Action.COPY_TO_CLIPBOARD,
                 code
             ));
-            clickableCode.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
+            codeButton.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(
                 net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT,
-                new net.md_5.bungee.api.chat.ComponentBuilder(ColorUtils.translate("&7Click to copy: &f" + code)).create()
+                new net.md_5.bungee.api.chat.ComponentBuilder(ColorUtils.translate("&a✔ Click to copy verification code")).create()
             ));
-            player.spigot().sendMessage(clickableCode);
+            
+            // Send instructions
+            player.spigot().sendMessage(codeComponents);
+            // Send the button
+            player.spigot().sendMessage(codeButton);
+            // Send confirmation instruction
+            player.sendMessage(ColorUtils.translate("&8&o(Code copied to clipboard when clicked)"));
         } catch (Exception e) {
             plugin.getLogger().severe("Error generating verification code: " + e.getMessage());
             String error = plugin.getConfig().getString("messages.minecraft.error", "&c❌ An error occurred: %error%\n&7Please try again later.");

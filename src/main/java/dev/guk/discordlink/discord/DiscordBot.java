@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -21,6 +22,7 @@ public class DiscordBot extends ListenerAdapter {
     private JDA jda;
     private Guild guild;
     private Role verifiedRole;
+    private boolean roleHierarchyValid = false;
 
     public DiscordBot(DiscordLink plugin) {
         this.plugin = plugin;
@@ -32,6 +34,14 @@ public class DiscordBot extends ListenerAdapter {
 
     public Role getVerifiedRole() {
         return verifiedRole;
+    }
+
+    public JDA getJDA() {
+        return jda;
+    }
+    
+    public boolean isRoleHierarchyValid() {
+        return roleHierarchyValid;
     }
 
     public boolean start() {
@@ -74,6 +84,25 @@ public class DiscordBot extends ListenerAdapter {
                 plugin.getLogger().severe("Could not find Discord role with ID: " + roleId);
                 return false;
             }
+            
+            // Check role hierarchy for the bot
+            roleHierarchyValid = guild.getSelfMember().canInteract(verifiedRole);
+            if (!roleHierarchyValid) {
+                plugin.getLogger().severe("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                plugin.getLogger().severe("⚠ CRITICAL ERROR: DISCORD ROLE HIERARCHY ISSUE DETECTED");
+                plugin.getLogger().severe("The bot's role must be positioned ABOVE the verified role in server settings!");
+                plugin.getLogger().severe("");
+                plugin.getLogger().severe("To fix this:");
+                plugin.getLogger().severe("1. Go to your Discord server");
+                plugin.getLogger().severe("2. Open Server Settings > Roles");
+                plugin.getLogger().severe("3. Drag the bot's role (named '" + guild.getSelfMember().getEffectiveName() + "') ABOVE the verified role");
+                plugin.getLogger().severe("4. Restart the plugin or server");
+                plugin.getLogger().severe("");
+                plugin.getLogger().severe("The plugin will continue to run, but verification will fail until this is fixed!");
+                plugin.getLogger().severe("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            } else {
+                plugin.getLogger().info("Role hierarchy check passed! Bot can assign the verified role.");
+            }
 
             // Register the verify command
             guild.upsertCommand("verify", "Verify your Minecraft account")
@@ -108,6 +137,20 @@ public class DiscordBot extends ListenerAdapter {
 
         String code = codeOption.getAsString();
         String discordId = event.getUser().getId();
+        
+        // First check if the bot can manage roles
+        if (!guild.getSelfMember().canInteract(verifiedRole)) {
+            String message = "❌ **ROLE HIERARCHY ERROR**\n\n"
+                + "The bot cannot assign the verified role because its role is not positioned high enough in the server settings.\n\n"
+                + "Please ask a server administrator to:\n"
+                + "1. Go to Server Settings > Roles\n"
+                + "2. Drag the bot's role (named '" + guild.getSelfMember().getEffectiveName() + "') above the verified role\n"
+                + "3. Try verification again after this is fixed\n\n"
+                + "If you've already verified in Minecraft but are having issues here, use `/verify force` in Minecraft to reset your verification.";
+            event.reply(message).setEphemeral(true).queue();
+            plugin.getLogger().severe("Role hierarchy error: Bot cannot assign the verified role to " + event.getUser().getName() + " because its role is too low in the hierarchy.");
+            return;
+        }
 
         // Verify the code and get the UUID
         String uuidStr = plugin.getVerificationManager().verifyCodeAndGetUUID(discordId, code);
@@ -172,6 +215,25 @@ public class DiscordBot extends ListenerAdapter {
             plugin.getLogger().severe("Error while verifying user: " + e.getMessage());
             String message = plugin.getConfig().getString("messages.discord.error", "❌ An error occurred while processing your request.\n• Please try again later\n• If the issue persists, contact an administrator");
             event.reply(message).setEphemeral(true).queue();
+        }
+    }
+
+    @Override
+    public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
+        if (!event.getGuild().getId().equals(guild.getId())) {
+            return;
+        }
+        
+        String discordId = event.getUser().getId();
+        if (discordId == null) {
+            return;
+        }
+        
+        // Find the player UUID associated with this Discord ID
+        plugin.getStorageManager().findAndUnlinkDiscordId(discordId);
+        
+        if (plugin.getConfig().getBoolean("settings.debug", false)) {
+            plugin.getLogger().info("User left Discord server, unlinked Discord ID: " + discordId);
         }
     }
 } 

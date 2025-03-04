@@ -56,4 +56,31 @@ public class StorageManager {
         data.set("players." + playerId.toString(), null);
         saveData();
     }
+
+    public void findAndUnlinkDiscordId(String discordId) {
+        if (discordId == null || discordId.isEmpty()) {
+            return;
+        }
+        
+        // Search through all players for this Discord ID
+        if (data.contains("players")) {
+            for (String uuidStr : data.getConfigurationSection("players").getKeys(false)) {
+                String storedDiscordId = data.getString("players." + uuidStr + ".discord_id");
+                if (discordId.equals(storedDiscordId)) {
+                    try {
+                        UUID playerId = UUID.fromString(uuidStr);
+                        
+                        // Remove the verification data
+                        removeVerification(playerId);
+                        
+                        plugin.getLogger().info("Unlinked Minecraft account with UUID " + 
+                                uuidStr + " because Discord user left the server");
+                        return;
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().warning("Invalid UUID stored in data: " + uuidStr);
+                    }
+                }
+            }
+        }
+    }
 } 

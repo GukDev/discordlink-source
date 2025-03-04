@@ -15,7 +15,11 @@
 #    - bot
 #    - applications.commands
 # 7. Invite the bot to your server
-# 8. Make sure the bot's role is ABOVE the verified role in server settings
+# 8. IMPORTANT: Make sure the bot's role is positioned ABOVE the verified role in server settings
+#    - Go to Server Settings > Roles
+#    - Drag the bot's role (usually named after your bot) to be ABOVE the verified role
+#    - This is REQUIRED for the bot to assign roles properly
+#    - If this is not done, verification will fail with a role hierarchy error
 
 # Plugin Settings
 settings:
@@ -37,6 +41,8 @@ discord:
 
   # The role ID to give to verified users (Required)
   # Right-click the role in Server Settings > Roles and click "Copy ID"
+  # IMPORTANT: The bot's role MUST be higher in the role list than this role,
+  # otherwise it cannot assign the role to users and verification will fail
   verified_role_id: ""
 
   # Nickname synchronization settings
@@ -44,6 +50,15 @@ discord:
   sync_nickname: true
   # Format for nicknames. Use %player% for the Minecraft username
   nickname_format: "%player%"
+  # Note: Due to Discord limitations, the server owner's nickname cannot be changed
+  # by the bot under any circumstances, even with proper permissions and role hierarchy.
+  # Server owners will need to manually set their nickname if desired.
+
+  # Role Hierarchy Note:
+  # Discord uses a top-down hierarchy for roles. Roles higher in the list
+  # can manage roles below them. For the bot to assign the verified role,
+  # the bot's role must be positioned above the verified role in the server's
+  # role settings. If verification is failing, check this first!
 
 # Verification Settings
 verification:
@@ -58,6 +73,46 @@ verification:
 
   # Cooldown between verification attempts (in seconds)
   cooldown: 60
+  
+  # Freeze settings
+  freeze:
+    # Whether to freeze players until they verify their Discord account
+    enabled: false
+    # Whether to allow small head movement while frozen
+    allow_head_movement: true
+    # Interval (in seconds) between reminder messages while frozen
+    reminder_interval: 30
+    # Whether to allow players to use basic commands while frozen
+    allow_basic_commands: true
+    # Permission node to bypass verification freeze
+    bypass_permission: "discordlink.bypass.freeze"
+    # List of commands that players can use while frozen
+    allowed_commands:
+      - "verify"
+      - "help"
+      - "discordlink"
+      - "unlink"
+      - "rules"
+
+# 2FA Settings
+two_factor_auth:
+  # Whether to enable 2FA login for verified players
+  enabled: false
+  # Length of the 2FA code
+  code_length: 6
+  # How long the 2FA code is valid for (in seconds)
+  expiry_time: 120
+  # Whether to freeze players until they complete 2FA verification
+  freeze_until_verified: false
+
+# Server Selector Settings
+server_selector:
+  # Whether to block unverified players from using the server selector
+  block_unverified: false
+  # Material of the server selector item (if any)
+  item_material: "COMPASS"
+  # Custom name of the server selector item (case-sensitive, leave blank to match any name)
+  item_name: "Server Selector"
 
 # Messages
 messages:
@@ -80,6 +135,20 @@ messages:
     player-only: "&c❌ This command can only be used by players!"
     # Message sent when an error occurs
     error: "&c❌ An error occurred: %error%\n&7Please try again later."
+    # Message sent when 2FA is required
+    two-factor-required: "&e⚠ Please enter the 2FA code sent to your Discord account.\n&7Use: &f/2fa <code>"
+    # Message sent when 2FA is successful
+    two-factor-success: "&a✔ 2FA verification successful! You can now play."
+    # Message sent when 2FA code is invalid
+    two-factor-invalid: "&c❌ Invalid 2FA code. Please try again."
+    # Message sent when 2FA code has expired
+    two-factor-expired: "&c⏳ Your 2FA code has expired. A new code has been sent."
+    # Message sent when player attempts to use commands before 2FA verification
+    two-factor-blocked: "&c❌ You need to complete 2FA verification first!"
+    # Message sent when player is frozen until verification
+    verification-frozen: "&e⚠ You need to verify your Discord account to play.\n&7Use &f/verify &7to get started."
+    # Message sent when a command is blocked due to verification freeze
+    verification-command-blocked: "&c❌ Please verify your Discord account first!\n&7Use &f/verify &7to get started."
 
   discord:
     # Message sent when verification is successful
@@ -91,4 +160,6 @@ messages:
     # Message sent when no code is provided
     no-code: "❌ Please provide a verification code!\n• Generate one in Minecraft using `/verify`"
     # Message sent when an error occurs
-    error: "❌ An error occurred while processing your request.\n• Please try again later\n• If the issue persists, contact an administrator" 
+    error: "❌ An error occurred while processing your request.\n• Please try again later\n• If the issue persists, contact an administrator"
+    # Message sent for 2FA code
+    two-factor-code: "🔐 **2FA Authentication Required**\n\nA login attempt was detected for your Minecraft account.\n\nYour 2FA code: **%code%**\n\nEnter this code in Minecraft to complete login." 

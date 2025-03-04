@@ -17,8 +17,12 @@ commands:
     permission: discordlink.unlink
   discordlink:
     description: Plugin management commands
-    usage: /discordlink reload
+    usage: /discordlink <reload|unlink> [player]
     permission: discordlink.admin
+  2fa:
+    description: Complete two-factor authentication
+    usage: /2fa <code>
+    permission: discordlink.verify
     
 permissions:
   discordlink.*:
